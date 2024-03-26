@@ -1,22 +1,29 @@
 package main
 
-import "core:strings"
+import "core:fmt"
+import "core:unicode/utf8"
 
 Lexer :: struct {
-	input:    string,
-	position: int,
-	next_pos: int,
-	ch:       byte,
+	path:        string,
+	src:         string,
+	ch:          rune,
+	offset:      int,
+	read_offest: int,
+	line_offest: int,
+	line_count:  int,
 }
 
 
-init_lexer :: proc(input: string) -> ^Lexer {
+init_lexer :: proc(input, path: string) -> ^Lexer {
 	l: ^Lexer = new(Lexer)
-	l.input = input
-	l.position = 0
-	l.next_pos = 0
-	l.ch = input[0]
-	read_char(l)
+	l.src = input
+	l.ch = ' '
+	l.offset = 0
+	l.read_offest = 0
+	l.line_offest = 0
+	l.line_count = len(input) > 0 ? 1 : 0
+	l.path = path
+	read_next(l)
 	return l
 }
 
@@ -25,47 +32,69 @@ destroy_lexer :: proc(lexer: ^Lexer) {
 }
 
 
-skip_white_space :: proc(lexer: ^Lexer) {
-	for lexer.ch == ' ' ||
-	    lexer.ch == '\t' ||
-	    lexer.ch == '\n' ||
-	    lexer.ch == '\r' {
-		read_char(lexer)
-	}
-}
-
-peak_char :: proc(lexer: ^Lexer) -> byte {
-	if lexer.next_pos >= len(lexer.input) {
-		return 0
-	}
-	return lexer.input[lexer.next_pos]
-}
-
-read_char :: proc(lexer: ^Lexer) {
-	lexer.ch = peak_char(lexer)
-	lexer.position = lexer.next_pos
-	lexer.next_pos += 1
-}
-
-
-next_tok :: proc(lexer: ^Lexer) {
-	tok: Token
-
-	switch lexer.ch {
-	case '=':
-		if peak_char(lexer) == '=' {
-			ch: byte = lexer.ch
-			read_char(lexer)
-			literal := "=="
-			tok = Token {
-				literal = literal,
-				type    = .Equal,
-			}
-		} else {
-			tok = {
-				literal = "=",
-				type    = .Assign,
+read_next :: proc(l: ^Lexer) {
+	if l.read_offest < len(l.src) {
+		l.offset = l.read_offest
+		if l.ch == '\n' {
+			l.line_offest = l.offset
+			l.line_count += 1
+		}
+		ch, w := rune(l.src[l.read_offest]), 1
+		switch {
+		case ch == 0:
+			fmt.println("Error with character: ", l)
+		case ch >= utf8.RUNE_SELF:
+			ch, w = utf8.decode_rune_in_string(l.src[l.read_offest:])
+			if ch == utf8.RUNE_ERROR && w == 1 {
+				fmt.println("Error with character: ", l)
+			} else if ch == utf8.RUNE_BOM && l.offset > 0 {
+				fmt.println("Error with character: ", l)
 			}
 		}
+		l.read_offest += w
+		l.ch = ch
+	} else {
+		l.offset = len(l.src)
+		if l.ch == '\n' {
+			l.line_offest = l.offset
+			l.line_offest += 1
+		}
+		l.ch = -1
 	}
+}
+
+skip_ws :: proc(l: ^Lexer) {
+	for {
+		switch l.ch {
+		case ' ', '\n', '\t', '\r':
+			read_next(l)
+		case:
+			return
+		}
+	}
+}
+
+offset_to_position :: proc(l: ^Lexer, offset: int) -> Token_Position {
+	line := l.line_count
+	col := offset - l.line_offest + 1
+	return(
+		Token_Position {
+			file = l.path,
+			offset = offset,
+			line = line,
+			col = col,
+		} \
+	)
+}
+
+
+read :: proc(l: ^Lexer) -> Token {
+	skip_ws(l)
+
+	offset := l.offset
+	token_kind: Token_Kind
+	literal: string
+	position := offset_to_position(l, offset)
+
+	return Token{type = token_kind, literal = literal, pos = position}
 }

@@ -1,8 +1,8 @@
 package main
 
-TokenKind :: enum {
+Token_Kind :: enum u32 {
 	Function,
-	const,
+	Const,
 	True,
 	False,
 	If,
@@ -15,6 +15,9 @@ TokenKind :: enum {
 	Uint,
 	Float,
 	String,
+	Array,
+	Record,
+	Interface,
 	Plus,
 	Minus,
 	Bang,
@@ -22,7 +25,10 @@ TokenKind :: enum {
 	Asterisk,
 	Slash,
 	Equal,
-    Assign,
+	Assign,
+	Comma,
+	SemiColon,
+	Colon,
 	NotEqual,
 	LessThan,
 	GreaterThan,
@@ -32,11 +38,58 @@ TokenKind :: enum {
 	RightBrace,
 	LeftBracket,
 	RightBracket,
+	Count,
 }
 
-TokenMap :: []string{"func", "const", "true", "false", "if", "else", "return"}
+TokenMap :: [Token_Kind.Count]string {
+	"func",
+	"const",
+	"true",
+	"false",
+	"if",
+	"else",
+	"return",
+	"illegal",
+	"EOF",
+	"identifier",
+	"Int",
+	"Uint",
+	"Float",
+	"String",
+	"Array",
+	"Record",
+	"Interface",
+	"+",
+	"-",
+	"!",
+	"?",
+	"*",
+	"/",
+	"==",
+	"=",
+	",",
+	";",
+	":",
+	"!=",
+	"<",
+	">",
+	"(",
+	")",
+	"{",
+	"}",
+	"[",
+	"]",
+}
 
 Token :: struct {
-	type:    TokenKind,
+	type:    Token_Kind,
 	literal: string,
+	pos:     Token_Position,
+}
+
+Token_Position :: struct {
+	file:   string,
+	offset: int,
+	line:   int,
+	col:    int,
 }
