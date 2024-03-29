@@ -1,6 +1,7 @@
 package main
 
 Token_Kind :: enum u32 {
+    Interface,
 	Function,
 	Const,
 	True,
@@ -49,6 +50,7 @@ Token_Kind :: enum u32 {
 }
 
 Keywords_Types :: []string {
+    "interface",
 	"func",
 	"const",
 	"true",
@@ -60,6 +62,7 @@ Keywords_Types :: []string {
 
 
 TokenMap :: [Token_Kind.Count]string {
+    "interface",
 	"func",
 	"const",
 	"true",
