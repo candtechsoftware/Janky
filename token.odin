@@ -18,7 +18,6 @@ Token_Kind :: enum u32 {
 	String,
 	Array,
 	Record,
-	Interface,
 	Plus,
 	Minus,
 	Bang,
@@ -79,7 +78,6 @@ TokenMap :: [Token_Kind.Count]string {
 	"String",
 	"Array",
 	"Record",
-	"Interface",
 	"+",
 	"-",
 	"!",
@@ -106,6 +104,12 @@ TokenMap :: [Token_Kind.Count]string {
 	"}",
 	"[",
 	"]",
+}
+
+calc_end_pos :: proc(token: Token) -> Token_Position {
+    pos: Token_Position
+    // TODO(Alex): implemnt
+    return pos
 }
 
 Token :: struct {

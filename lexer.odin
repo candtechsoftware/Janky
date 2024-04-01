@@ -328,6 +328,10 @@ read :: proc(l: ^Lexer) -> Token {
 				read_next(l)
 				token_kind = .GreaterThanEq
 			}
+		case ';':
+			token_kind = .SemiColon
+		case ':':
+			token_kind = .Colon
 		case '&':
 			token_kind = .And
 		case '|':
