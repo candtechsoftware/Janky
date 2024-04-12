@@ -13,7 +13,7 @@ main :: proc() {
 
 	b, err := os.read_entire_file_from_filename(file_name)
 	p := init_parser()
-	ast_file := AST_File {
+	ast_file := Ast_File {
 		name     = file_name,
 		fullpath = file_name,
 	}

@@ -10,7 +10,16 @@ Node :: struct {
 	derived: Any_Node,
 }
 
-Any_Node :: union {}
+Any_Node :: union {
+	// Stmts
+	^Illegal_Stmt,
+	^Expr_Stmt,
+	^Empty_Stmt,
+
+	// Expr
+    ^Unary_Expr,
+	^Func_Lit,
+}
 
 
 Expr :: struct {
@@ -19,9 +28,9 @@ Expr :: struct {
 }
 
 Unary_Expr :: struct {
-    using node: Expr,
-    op: Token,
-    expr: ^Expr,
+	using node: Expr,
+	op:         Token,
+	expr:       ^Expr,
 }
 Ident :: struct {
 	using node: Expr,
@@ -30,6 +39,7 @@ Ident :: struct {
 
 Any_Expr :: union {
 	^Ident,
+	^Unary_Expr,
 }
 
 Ast_File :: struct {
@@ -41,28 +51,56 @@ Ast_File :: struct {
 }
 
 
-Illegal_Stmt :: struct {}
-
-Stmt :: union {
-	Illegal_Stmt,
+Illegal_Stmt :: struct {
+	using node: Stmt,
 }
 
 
-Ast_Stmt :: struct {
-	using node:   Node,
-	derived_stmt: Stmt,
+Any_Stmt :: union {
+	^Illegal_Stmt,
+	^Empty_Stmt,
+	^Stmt,
 }
 
-create_statment :: proc(tok: Token, stmt: Stmt) -> Ast_Stmt {
-	node: Node = {
-		start = tok.pos,
-		end   = calc_end_pos(tok),
-	}
-	return Ast_Stmt{node = node, derived_stmt = stmt}
+
+Stmt :: struct {
+	using stmt_base: Node,
+	derived_stmt:    Any_Stmt,
 }
+
+Empty_Stmt :: struct {
+	using node: Node,
+	semicolon:  Token_Position,
+}
+
+Expr_Stmt :: struct {
+	using node: Stmt,
+	expr:       ^Expr,
+}
+
+Field :: struct {}
+
+Field_List :: struct {
+	using node: Node,
+	open:       Token_Position,
+	list:       []^Field,
+	close:      Token_Position,
+}
+Proc_Type :: struct {
+	using node: Expr,
+	tok:        Token,
+	params:     Field_List,
+}
+
+Func_Lit :: struct {
+	using node: Expr,
+	type:       ^Proc_Type,
+	body:       Stmt,
+}
+
 
 new_end_node :: proc($T: typeid, pos: Token_Position, end: ^Node) -> ^T {
-	return new(T, pos, end != nil ? end.end : pos)
+	return new_ast_item(T, pos, end != nil ? end.end : pos)
 }
 
 new_from_positions :: proc($T: typeid, pos, end: Token_Position) -> ^T {

@@ -104,7 +104,7 @@ check_if_keyword :: proc(literal: string) -> (Token_Kind, bool) {
 			}
 		}
 	}
-	return Token_Kind.NotFound, false
+	return Token_Kind.Invalid, false
 }
 
 read_mantissa :: proc(l: ^Lexer, base := 10) {
@@ -152,7 +152,7 @@ read_fraction :: proc(l: ^Lexer, kind: ^Token_Kind) -> bool {
 read_number :: proc(l: ^Lexer, seen_decimal_point: bool) -> (Token_Kind, string) {
 
 	offset := l.offset
-	kind := Token_Kind.Int
+	kind := Token_Kind.Integer
 	seen_point := seen_decimal_point
 
 	if seen_point {
@@ -167,7 +167,7 @@ read_number :: proc(l: ^Lexer, seen_decimal_point: bool) -> (Token_Kind, string)
 				read_next(l)
 				read_mantissa(l, base)
 				if l.offset - prev <= 1 {
-					kind^ = .Illegal
+					kind^ = .Invalid
 					handle_error(l, msg)
 				}
 			}
@@ -188,7 +188,7 @@ read_number :: proc(l: ^Lexer, seen_decimal_point: bool) -> (Token_Kind, string)
 				read_next(l)
 				read_mantissa(l, 16)
 				if l.offset - prev <= 1 {
-					kind = Token_Kind.Illegal
+					kind = Token_Kind.Invalid
 					handle_error(l, "illegal hexadecimal float")
 				} else {
 					sub := l.src[prev + 1:l.offset]
@@ -263,7 +263,7 @@ read :: proc(l: ^Lexer) -> Token {
 		case -1:
 			token_kind = .EOF
 		case '\n':
-			token_kind = .SemiColon
+			token_kind = .Semicolon
 			literal = "\n"
 		case '\\':
 			token := read(l)
@@ -287,49 +287,63 @@ read :: proc(l: ^Lexer) -> Token {
 				handle_error(l, "don't support ellipsis and ranges yet")
 			}
 		case '?':
-			token_kind = .QuestionMark
+			token_kind = .Quo
 		case '(':
-			token_kind = .LeftParen
+			token_kind = .Open_Paren
 		case ')':
-			token_kind = .RightParen
+			token_kind = .Close_Paren
 		case '[':
-			token_kind = .LeftBrace
+			token_kind = .Open_Brace
 		case ']':
-			token_kind = .RightBrace
+			token_kind = .Close_Brace
 		case '{':
-			token_kind = .LeftBracket
+			token_kind = .Open_Bracket
 		case '}':
-			token_kind = .RightBracket
+			token_kind = .Close_Bracket
 		case '@':
 			token_kind = .At
 		case '*':
-			token_kind = .Multiply
+			token_kind = .Mul
 		case '=':
-			token_kind = .Assign
+			token_kind = .Eq
 			if l.ch == '=' {
 				read_next(l)
-				token_kind = .Equal
+				token_kind = .Eq
 			}
 		case '+':
-			token_kind = .Plus
-		case '-':
-			token_kind = .Minus
-		case '/':
-			token_kind = .Divide
-		case '<':
-			token_kind = .LessThan
+			token_kind = .Add
 			if l.ch == '=' {
 				read_next(l)
-				token_kind = .LessThanEq
+				token_kind = .And_Eq
+			}
+		case '-':
+			token_kind = .Sub
+			if l.ch == '=' {
+				read_next(l)
+				token_kind = .Sub_Eq
+			}
+		case '!':
+			token_kind = .Not
+			if l.ch == '=' {
+				read_next(l)
+				token_kind = .Not_Eq
+			}
+		case '/':
+			token_kind = .Quo
+		case '<':
+			token_kind = .Lt
+			if l.ch == '=' {
+				read_next(l)
+				token_kind = .Lt_Eq
 			}
 		case '>':
-			token_kind = .GreaterThan
+			token_kind = .Gt
 			if l.ch == '=' {
 				read_next(l)
-				token_kind = .GreaterThanEq
+				token_kind = .Gt_Eq
 			}
 		case ';':
-			token_kind = .SemiColon
+			token_kind = .Semicolon
 		case ':':
 			token_kind = .Colon
 		case '&':
@@ -340,7 +354,7 @@ read :: proc(l: ^Lexer) -> Token {
 			if ch != utf8.RUNE_BOM {
 				handle_error(l, "illegal character")
 			}
-			token_kind = .Illegal
+			token_kind = .Invalid
 		}
 	}
 	if literal == "" {

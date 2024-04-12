@@ -35,7 +35,7 @@ next_token :: proc(p: ^Parser) -> Token {
 }
 parse_unary_expr :: proc(p: ^Parser, lhs: bool) -> ^Expr {
 	#partial switch p.current_token.type {
-	case .Plus, .Minus, .And:
+	case .Add, .Sub, .And:
 		op := next_token(p)
 		expr := parse_unary_expr(p, lhs)
 		ue := new_ast_item(Unary_Expr, op.pos, expr)
@@ -45,8 +45,8 @@ parse_unary_expr :: proc(p: ^Parser, lhs: bool) -> ^Expr {
 	return parser_atom_expr(p, parse_operand(p, lhs), lhs)
 }
 
-parse_operand :: proc(p: ^Parser, lhs: bool)-> ^Expr {
-    unimplemented()
+parse_operand :: proc(p: ^Parser, lhs: bool) -> ^Expr {
+	unimplemented()
 }
 parser_atom_expr :: proc(p: ^Parser, value: ^Expr, lhs: bool) -> ^Expr {
 	operand := value
@@ -56,17 +56,17 @@ parser_atom_expr :: proc(p: ^Parser, value: ^Expr, lhs: bool) -> ^Expr {
 		return nil
 	}
 
-    is_lhs := lhs
-    for {
-    }
-    return operand
+	is_lhs := lhs
+	for {
+	}
+	return operand
 }
 
 parse_binary_expr :: proc(p: ^Parser, lhs: bool, prec_in: int) -> ^Expr {
 	start := p.current_token.pos
 	expr := parse_unary_expr(p, lhs)
 
-    unimplemented()
+	unimplemented()
 }
 
 parse_expr :: proc(p: ^Parser, lhs: bool) -> ^Expr {
@@ -86,18 +86,24 @@ parse_expr_list :: proc(p: ^Parser, lhs: bool) -> []^Expr {
 	return list[:]
 }
 
-parse_simple_stmt :: proc(p: ^Parser) -> Ast_Stmt {
+parse_simple_stmt :: proc(p: ^Parser) -> ^Stmt {
 	start := p.current_token
-    unimplemented()
+
+    //lhs := parse_lhs_expr_list(p)
+    op := p.current_token
+
+    switch {
+    }
+	unimplemented()
 }
 
-parse_stmt :: proc(p: ^Parser) -> Ast_Stmt {
+parse_stmt :: proc(p: ^Parser) -> ^Stmt {
 	tok := next_token(p)
 	#partial switch p.current_token.type {
-	case .Ident, .Int, .Float, .Uint, .String:
+	case .Ident, .Integer, .Bin_Integer, .Float, .Unsigned_Integer, .String:
 		return parse_simple_stmt(p)
 	}
-	return create_statment(tok, Illegal_Stmt{})
+    return new_ast_item(Illegal_Stmt, tok.pos, calc_end_pos(tok))
 }
 
 
@@ -112,7 +118,16 @@ parse_file :: proc(p: ^Parser, file: ^Ast_File) -> bool {
 
 	for p.current_token.type != .EOF {
 		stmt := parse_stmt(p)
-        unimplemented()
+		if stmt != nil {
+			if _, ok := stmt.derived.(^Empty_Stmt); !ok {
+				if es, es_ok := stmt.derived.(^Expr_Stmt); es_ok && es.expr != nil {
+					if _, f_ok := es.expr.derived.(^Func_Lit); f_ok {
+						handle_error(p.lexer, "function literal was evaluated but not used")
+					}
+				}
+			}
+		}
+		unimplemented()
 	}
 	return true
 }
