@@ -17,5 +17,8 @@ main :: proc() {
 		name     = file_name,
 		fullpath = file_name,
 	}
-	parse_file(&p, &ast_file)
+
+	ok := parse_file(&p, &ast_file)
+    fmt.println("Lexer: %#v", p.lexer)
+    fmt.println("Stmts: %#v", p.file.decls)
 }

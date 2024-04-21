@@ -15,9 +15,10 @@ Any_Node :: union {
 	^Illegal_Stmt,
 	^Expr_Stmt,
 	^Empty_Stmt,
+	^Assign_Stmt,
 
 	// Expr
-    ^Unary_Expr,
+	^Unary_Expr,
 	^Func_Lit,
 }
 
@@ -48,6 +49,7 @@ Ast_File :: struct {
 	name:       string,
 	fullpath:   string,
 	src:        string,
+	decls:      [dynamic]^Stmt,
 }
 
 
@@ -60,12 +62,40 @@ Any_Stmt :: union {
 	^Illegal_Stmt,
 	^Empty_Stmt,
 	^Stmt,
+	^Block_Stmt,
+	^For_Stmt,
 }
 
+
+Block_Stmt :: struct {
+	using node: Stmt,
+	label:      ^Expr,
+	open:       tokenizer.Pos,
+	stmts:      []^Stmt,
+	close:      tokenizer.Pos,
+}
+
+If_Stmt :: struct {
+	using node: Stmt,
+	label:      ^Expr,
+	if_pos:     tokenizer.Pos,
+	init:       ^Stmt,
+	cond:       ^Expr,
+	body:       ^Stmt,
+	else_pos:   tokenizer.Pos,
+	else_stmt:  ^Stmt,
+}
 
 Stmt :: struct {
 	using stmt_base: Node,
 	derived_stmt:    Any_Stmt,
+}
+
+Assign_Stmt :: struct {
+	using node: Stmt,
+	lhs:        []^Expr,
+	op:         tokenizer.Token,
+	rhs:        []^Expr,
 }
 
 Empty_Stmt :: struct {
